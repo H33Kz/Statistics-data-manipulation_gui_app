@@ -8,6 +8,7 @@ from tkinter import *
 
 class appMenu():
     def __init__(self,root,geometry,title):
+        #=========Loading of placeholder image
         baseDir = os.path.dirname(__file__)
         filePath = os.path.join(baseDir,'..','static','Figure_1.png')
         self.image = PhotoImage(file=filePath)
@@ -18,9 +19,10 @@ class appMenu():
 
         #=========Upper menus
         self.fileMenu = Menu(self.root)
-        self.loadDataMenu = Menu(self.fileMenu)
-        self.loadDataMenu.add_command(label='Load data')
-        self.fileMenu.add_cascade(label='File',menu=self.loadDataMenu)
+        self.menuItems = Menu(self.fileMenu)
+        self.menuItems.add_command(label='Load data')
+        self.menuItems.add_command(label='Load image',command=self.LoadImage)
+        self.fileMenu.add_cascade(label='File',menu=self.menuItems)
         self.root.config(menu=self.fileMenu)
 
         #=========Plot frame
@@ -45,5 +47,11 @@ class appMenu():
         self.categoryComboBox['values'] = (5,6,7,8)
         self.categoryComboBox.pack(padx=10,pady=10)
         self.buttonFrame.grid(column=1,row=0,sticky=N)
+    
+    def LoadImage(self):
+        filepath = easygui.fileopenbox()
+        tempImage = PhotoImage(file=filepath)
+        self.image = tempImage
 
+        self.plotCanvas.create_image(10,10,anchor=NW,image=self.image)
         
