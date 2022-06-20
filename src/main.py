@@ -2,11 +2,9 @@ from tkinter import *
 import layout
 
 def main():
-    root = Tk()
-    root.title('Statistics data analysis tool')
+    root = Tk() 
     
-    
-    m = layout.Menu(root)
+    m = layout.Menu(root,None,'Statistics data analysis tool')
     
     root.mainloop()
 
