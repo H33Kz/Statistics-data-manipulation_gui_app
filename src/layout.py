@@ -2,7 +2,7 @@ from tkinter.ttk import Combobox
 import easygui
 import matplotlib
 import os
-from PIL import ImageTk,Image
+import PIL.Image, PIL.ImageTk
 from tkinter import *
 
 class appMenu():
@@ -10,7 +10,8 @@ class appMenu():
         #=========Loading of plot placeholder image
         self.BASE_DIR = os.path.dirname(__file__)
         filePath = os.path.join(self.BASE_DIR,'..','static','Figure_1.png')
-        self.image = PhotoImage(file=filePath)
+        self.img = PIL.Image.open(filePath)
+        self.img = PIL.ImageTk.PhotoImage(self.img)
 
         #=========Title and geometry setup
         self.root = root
@@ -32,7 +33,7 @@ class appMenu():
         #=========Plot frame
         self.imageFrame = Frame(self.root)
         self.plotCanvas = Canvas(self.imageFrame,width=640,height=480)
-        self.plotCanvas.create_image(10,10,anchor=NW,image=self.image)
+        self.plotCanvas.create_image(10,10,anchor=NW,image=self.img)
         self.plotCanvas.pack()
         self.imageFrame.grid(column=0,row=0)
 
@@ -54,8 +55,9 @@ class appMenu():
     
     def LoadImage(self):
         filepath = easygui.fileopenbox()
-        tempImage = PhotoImage(file=filepath)
-        self.image = tempImage
+        tempImage = PIL.Image.open(filepath)
+        self.img = PIL.ImageTk.PhotoImage(tempImage)
 
-        self.plotCanvas.create_image(10,10,anchor=NW,image=self.image)
+        self.plotCanvas.config(width=tempImage.width,height=tempImage.height)
+        self.plotCanvas.create_image(10,10,anchor=NW,image=self.img)
         
