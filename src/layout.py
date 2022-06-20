@@ -1,4 +1,3 @@
-from msilib.schema import ComboBox
 from tkinter.ttk import Combobox
 import easygui
 import matplotlib
@@ -8,14 +7,19 @@ from tkinter import *
 
 class appMenu():
     def __init__(self,root,geometry,title):
-        #=========Loading of placeholder image
-        baseDir = os.path.dirname(__file__)
-        filePath = os.path.join(baseDir,'..','static','Figure_1.png')
+        #=========Loading of plot placeholder image
+        self.BASE_DIR = os.path.dirname(__file__)
+        filePath = os.path.join(self.BASE_DIR,'..','static','Figure_1.png')
         self.image = PhotoImage(file=filePath)
 
+        #=========Title and geometry setup
         self.root = root
         self.root.geometry(geometry)
         self.root.title(title)
+
+        #=========Window icon setup
+        iconPath = os.path.join(self.BASE_DIR,'..','static','chart.ico')
+        self.root.iconbitmap(iconPath)
 
         #=========Upper menus
         self.fileMenu = Menu(self.root)
