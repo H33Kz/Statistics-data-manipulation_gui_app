@@ -6,7 +6,7 @@ import os
 from PIL import ImageTk,Image
 from tkinter import *
 
-class Menu():
+class appMenu():
     def __init__(self,root,geometry,title):
         baseDir = os.path.dirname(__file__)
         filePath = os.path.join(baseDir,'..','static','Figure_1.png')
@@ -15,6 +15,13 @@ class Menu():
         self.root = root
         self.root.geometry(geometry)
         self.root.title(title)
+
+        #=========Upper menus
+        self.fileMenu = Menu(self.root)
+        self.loadDataMenu = Menu(self.fileMenu)
+        self.loadDataMenu.add_command(label='Load data')
+        self.fileMenu.add_cascade(label='File',menu=self.loadDataMenu)
+        self.root.config(menu=self.fileMenu)
 
         #=========Plot frame
         self.imageFrame = Frame(self.root)

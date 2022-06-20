@@ -4,7 +4,7 @@ import layout
 def main():
     root = Tk() 
     
-    m = layout.Menu(root,None,'Statistics data analysis tool')
+    m = layout.appMenu(root,None,'Statistics data analysis tool')
     
     root.mainloop()
 
