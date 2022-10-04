@@ -62,4 +62,7 @@ class appMenu():
         #====Resizing canvas for image size
         self.plotCanvas.config(width=tempImage.width,height=tempImage.height)
         self.plotCanvas.create_image(10,10,anchor=NW,image=self.img)
+
+    def LoadData(self):
+        pass
         
