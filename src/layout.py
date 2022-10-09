@@ -25,7 +25,7 @@ class appMenu():
         #=========Upper menus
         self.fileMenu = Menu(self.root)
         self.menuItems = Menu(self.fileMenu)
-        self.menuItems.add_command(label='Load data')
+        self.menuItems.add_command(label='Load data',command=self.LoadData)
         self.menuItems.add_command(label='Load image',command=self.LoadImage)
         self.fileMenu.add_cascade(label='File',menu=self.menuItems)
         self.root.config(menu=self.fileMenu)
@@ -43,13 +43,13 @@ class appMenu():
         self.countryLabel = Label(self.buttonFrame,text='Country:')
         self.countryLabel.pack()
         self.countryComboBox = Combobox(self.buttonFrame)
-        self.countryComboBox['values'] = (1,2,3,4)
+        self.countryComboBox['values'] = ('Nodata')
         self.countryComboBox.pack(padx=10,pady=10)
 
         self.categoryLabel = Label(self.buttonFrame,text='Category:')
         self.categoryLabel.pack()
         self.categoryComboBox = Combobox(self.buttonFrame)
-        self.categoryComboBox['values'] = (5,6,7,8)
+        self.categoryComboBox['values'] = ('Nodata')
         self.categoryComboBox.pack(padx=10,pady=10)
         self.buttonFrame.grid(column=1,row=0,sticky=N)
     
@@ -62,4 +62,13 @@ class appMenu():
         #====Resizing canvas for image size
         self.plotCanvas.config(width=tempImage.width,height=tempImage.height)
         self.plotCanvas.create_image(10,10,anchor=NW,image=self.img)
-        
+    
+    def LoadData(self):
+        filepath = easygui.fileopenbox()
+
+        if filepath.endswith('.json'):
+            print('its json')
+        elif filepath.endswith('.csv'):
+            print('its csv')
+        elif filepath.endswith('.xlsx'):
+            print('its xlsx')
