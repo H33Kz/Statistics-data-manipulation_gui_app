@@ -1,10 +1,11 @@
 from tkinter.ttk import Combobox
+from tkinter import *
+from dateutil import parser
 import easygui
-import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import os
 import PIL.Image, PIL.ImageTk
-from tkinter import *
-import pyexcel
 import csv
 import numpy as np
 
@@ -61,9 +62,13 @@ class appMenu():
         self.unitComboBox = Combobox(self.buttonFrame)
         self.unitComboBox['values'] = (self.uniqueUnit)
         self.unitComboBox['state'] = 'readonly'
-        self.unitComboBox.pack(padx=10,pady=10)
+        self.unitComboBox.pack(padx=10,pady=10)        
+        #===Graph drawing button
+        self.graphButton = Button(self.buttonFrame, text='Create graph',command=self.CreateGraph)
+        self.graphButton.pack()
+
         self.buttonFrame.grid(column=1,row=0,sticky=N)
-    
+
     def LoadImage(self):
         #====Opening file and saviing it as photoimage type
         filepath = easygui.fileopenbox()
@@ -106,4 +111,23 @@ class appMenu():
             print('Datatype not supported')
 
     def CreateGraph(self):
-        pass
+        print(self.unitComboBox.get())
+        print(self.countryComboBox.get())
+
+        selectedCountry = self.countryComboBox.get()
+        selectedUnit = self.unitComboBox.get()
+        selectedData = []
+        for row in self.records:
+            if row[-1] == selectedCountry and row[-6] == selectedUnit:
+                row[-2] = str(parser.parse(row[-2]).month)
+                selectedData.append(row)
+        
+        plotData = [[]]*12
+        for row in selectedData:
+            plotData[int(row[-2])-1].append(float(row[-3]))
+
+        figure = plt.figure(figsize=(10,10),dpi=100)
+        graph = figure.add_subplot(111)
+        graph.boxplot(plotData)
+        figure.show()
+
