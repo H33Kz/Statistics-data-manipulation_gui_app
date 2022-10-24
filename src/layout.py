@@ -4,9 +4,18 @@ import matplotlib
 import os
 import PIL.Image, PIL.ImageTk
 from tkinter import *
+import pyexcel
+import csv
+import numpy as np
+
+
 
 class appMenu():
     def __init__(self,root,geometry,title):
+        #=========Initiating empty variables for plot data
+        self.uniqueCountries = ['No data']
+        self.uniqueUnit = ['No data']
+
         #=========Loading of plot placeholder image
         self.BASE_DIR = os.path.dirname(__file__)
         filePath = os.path.join(self.BASE_DIR,'..','static','Figure_1.png')
@@ -17,7 +26,7 @@ class appMenu():
         self.root = root
         self.root.geometry(geometry)
         self.root.title(title)
-
+        
         #=========Window icon setup
         iconPath = os.path.join(self.BASE_DIR,'..','static','chart.ico')
         self.root.iconbitmap(iconPath)
@@ -37,20 +46,22 @@ class appMenu():
         self.plotCanvas.pack()
         self.imageFrame.grid(column=0,row=0)
 
-        #=========Optons frame
+        #=========Categories frame
         self.buttonFrame = Frame(self.root)
-
+        #===Country selection
         self.countryLabel = Label(self.buttonFrame,text='Country:')
         self.countryLabel.pack()
         self.countryComboBox = Combobox(self.buttonFrame)
-        self.countryComboBox['values'] = ('Nodata')
+        self.countryComboBox['values'] = (self.uniqueCountries)
+        self.countryComboBox['state'] = 'readonly'
         self.countryComboBox.pack(padx=10,pady=10)
-
-        self.categoryLabel = Label(self.buttonFrame,text='Category:')
-        self.categoryLabel.pack()
-        self.categoryComboBox = Combobox(self.buttonFrame)
-        self.categoryComboBox['values'] = ('Nodata')
-        self.categoryComboBox.pack(padx=10,pady=10)
+        #===Unit selection
+        self.unitLabel = Label(self.buttonFrame,text='Unit:')
+        self.unitLabel.pack()
+        self.unitComboBox = Combobox(self.buttonFrame)
+        self.unitComboBox['values'] = (self.uniqueUnit)
+        self.unitComboBox['state'] = 'readonly'
+        self.unitComboBox.pack(padx=10,pady=10)
         self.buttonFrame.grid(column=1,row=0,sticky=N)
     
     def LoadImage(self):
@@ -67,10 +78,32 @@ class appMenu():
     def LoadData(self):
         filepath = easygui.fileopenbox()
 
-        if filepath.endswith('.json'):
-            print('its json')
-        elif filepath.endswith('.csv'):
-            print('its csv')
-        elif filepath.endswith('.xlsx'):
-            print('its xlsx')
+        if filepath.endswith('.csv'):
+            #====Opening csv file and saving its data to a list of lists
+            rows = []
+            with open(filepath, 'r', encoding='utf-8') as file:
+                csvreader = csv.reader(file)
+                self.header = next(csvreader)
+                for row in csvreader:
+                    rows.append(row)
+            self.records = rows
+            #====Parsing unique country names to a list
+            self.uniqueCountries = []
+            for row in self.records:
+                self.uniqueCountries.append(row[-1])
+            self.uniqueCountries = np.ndarray.tolist(np.unique(np.array(self.uniqueCountries)))
+            print(self.uniqueCountries)
+            self.countryComboBox['values'] = (self.uniqueCountries)
+            #====Parsing unique units to a list
+            self.uniqueUnit = []
+            for row in self.records:
+                self.uniqueUnit.append(row[-6])
+            self.uniqueUnit = np.ndarray.tolist(np.unique(np.array(self.uniqueUnit)))
+            print(self.uniqueUnit)
+            self.unitComboBox['values'] = (self.uniqueUnit)
 
+        else:
+            print('Datatype not supported')
+
+    def CreateGraph(self):
+        pass
