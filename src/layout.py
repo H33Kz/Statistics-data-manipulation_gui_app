@@ -120,24 +120,27 @@ class appMenu():
             print('Datatype not supported')
 
     def CreateGraph(self):
+        #====Getting chosen options
         selectedCountry = self.countryComboBox.get()
         selectedUnit = self.unitComboBox.get()
+        #====Parsing readings that fit chosen category
         selectedData = []
         for row in self.records:
             if row[-1] == selectedCountry and row[-6] == selectedUnit:
                 row[-2] = str(parser.parse(row[-2]).month)
                 selectedData.append(row)
-        
+        #====Transforming data for graph drawing
         plotData = [[] for i in range(12)]
         for row in selectedData:
             for idx,dataRow in enumerate(plotData):
                 if idx == int(row[-2])-1:
                     dataRow.append(float(row[-3]))
 
-
+        #====Clearing graph
         self.figure.clear()
         self.graph.clear()
         self.graph = self.figure.add_subplot(111)
+        #====Ploting with a new data
         self.graph.boxplot(plotData)
         self.plotCanvas.draw()
 
