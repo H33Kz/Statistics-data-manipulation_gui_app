@@ -37,7 +37,6 @@ class appMenu():
         self.fileMenu = Menu(self.root)
         self.menuItems = Menu(self.fileMenu)
         self.menuItems.add_command(label='Load data',command=self.LoadData)
-        self.menuItems.add_command(label='Load image',command=self.LoadImage)
         self.fileMenu.add_cascade(label='File',menu=self.menuItems)
         self.root.config(menu=self.fileMenu)
 
@@ -79,16 +78,6 @@ class appMenu():
         self.graphButton.pack()
 
         self.buttonFrame.grid(column=1,row=0,sticky=N)
-
-    def LoadImage(self):
-        #====Opening file and saviing it as photoimage type
-        filepath = easygui.fileopenbox()
-        tempImage = PIL.Image.open(filepath)
-        self.img = PIL.ImageTk.PhotoImage(tempImage)
-
-        #====Resizing canvas for image size
-        self.plotCanvas.config(width=tempImage.width,height=tempImage.height)
-        self.plotCanvas.create_image(10,10,anchor=NW,image=self.img)
 
     
     def LoadData(self):
