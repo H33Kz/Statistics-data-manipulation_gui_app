@@ -4,6 +4,7 @@ from dateutil import parser
 import easygui
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
 import os
 import PIL.Image, PIL.ImageTk
 import csv
@@ -43,13 +44,19 @@ class appMenu():
         #=========Plot frame
         self.imageFrame = Frame(self.root)
 
-        self.figure = plt.figure(figsize=(10,6),dpi=100)
+        self.figure = plt.figure(figsize=(8,6),dpi=100)
         self.graph = self.figure.add_subplot(111)
         self.plotCanvas = FigureCanvasTkAgg(self.figure,self.imageFrame)
         self.plotCanvas.get_tk_widget().pack()
         self.plotCanvas.draw()
         
+
         self.imageFrame.grid(column=0,row=0)
+
+        #=========Toolbar frame
+        self.toolbarFrame = Frame(self.root)
+        self.toolbarFrame.grid(column=0,row=1)
+        self.toolbar=NavigationToolbar2Tk(self.plotCanvas,self.toolbarFrame)
 
         #=========Categories frame
         self.buttonFrame = Frame(self.root)
@@ -101,23 +108,18 @@ class appMenu():
             for row in self.records:
                 self.uniqueCountries.append(row[-1])
             self.uniqueCountries = np.ndarray.tolist(np.unique(np.array(self.uniqueCountries)))
-            print(self.uniqueCountries)
             self.countryComboBox['values'] = (self.uniqueCountries)
             #====Parsing unique units to a list
             self.uniqueUnit = []
             for row in self.records:
                 self.uniqueUnit.append(row[-6])
             self.uniqueUnit = np.ndarray.tolist(np.unique(np.array(self.uniqueUnit)))
-            print(self.uniqueUnit)
             self.unitComboBox['values'] = (self.uniqueUnit)
 
         else:
             print('Datatype not supported')
 
     def CreateGraph(self):
-        print(self.unitComboBox.get())
-        print(self.countryComboBox.get())
-
         selectedCountry = self.countryComboBox.get()
         selectedUnit = self.unitComboBox.get()
         selectedData = []
@@ -126,9 +128,12 @@ class appMenu():
                 row[-2] = str(parser.parse(row[-2]).month)
                 selectedData.append(row)
         
-        plotData = [[]]*12
+        plotData = [[] for i in range(12)]
         for row in selectedData:
-            plotData[int(row[-2])-1].append(float(row[-3]))
+            for idx,dataRow in enumerate(plotData):
+                if idx == int(row[-2])-1:
+                    dataRow.append(float(row[-3]))
+
 
         self.figure.clear()
         self.graph.clear()
