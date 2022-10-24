@@ -42,9 +42,13 @@ class appMenu():
 
         #=========Plot frame
         self.imageFrame = Frame(self.root)
-        self.plotCanvas = Canvas(self.imageFrame,width=640,height=480)
-        self.plotCanvas.create_image(10,10,anchor=NW,image=self.img)
-        self.plotCanvas.pack()
+
+        self.figure = plt.figure(figsize=(10,6),dpi=100)
+        self.graph = self.figure.add_subplot(111)
+        self.plotCanvas = FigureCanvasTkAgg(self.figure,self.imageFrame)
+        self.plotCanvas.get_tk_widget().pack()
+        self.plotCanvas.draw()
+        
         self.imageFrame.grid(column=0,row=0)
 
         #=========Categories frame
@@ -126,8 +130,10 @@ class appMenu():
         for row in selectedData:
             plotData[int(row[-2])-1].append(float(row[-3]))
 
-        figure = plt.figure(figsize=(10,10),dpi=100)
-        graph = figure.add_subplot(111)
-        graph.boxplot(plotData)
-        figure.show()
+        self.figure.clear()
+        self.graph.clear()
+        self.graph = self.figure.add_subplot(111)
+        self.graph.boxplot(plotData)
+        self.plotCanvas.draw()
+
 
