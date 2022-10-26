@@ -1,4 +1,6 @@
-from tkinter.ttk import Combobox
+from pydoc import text
+from tkinter.tix import NoteBook
+from tkinter.ttk import Combobox, Notebook
 from tkinter import *
 from dateutil import parser
 import easygui
@@ -40,45 +42,50 @@ class appMenu():
         self.fileMenu.add_cascade(label='File',menu=self.menuItems)
         self.root.config(menu=self.fileMenu)
 
-        #=========Plot frame
-        self.imageFrame = Frame(self.root)
+        #=========Tab control(Moving between app functionality) and frames for different tabs
+        self.tabControl = Notebook(self.root)
+        self.boxPlotTab = Frame(self.root)
+        self.generalStatsTab = Frame(self.root)
 
+        self.tabControl.add(self.boxPlotTab,text='boxplot')
+        self.tabControl.add(self.generalStatsTab,text='general')
+        self.tabControl.pack()
+
+        #==============================================BOXPLOT====================================
+        #=========Plot frame
+        self.boxPlotFrame = Frame(self.boxPlotTab)
         self.figure = plt.figure(figsize=(8,6),dpi=100)
         self.graph = self.figure.add_subplot(111)
-        self.plotCanvas = FigureCanvasTkAgg(self.figure,self.imageFrame)
+        self.plotCanvas = FigureCanvasTkAgg(self.figure,self.boxPlotFrame)
         self.plotCanvas.get_tk_widget().pack()
         self.plotCanvas.draw()
-        
-
-        self.imageFrame.grid(column=0,row=0)
-
+        self.boxPlotFrame.grid(column=0,row=0)
         #=========Toolbar frame
-        self.toolbarFrame = Frame(self.root)
-        self.toolbarFrame.grid(column=0,row=1)
-        self.toolbar=NavigationToolbar2Tk(self.plotCanvas,self.toolbarFrame)
-
+        self.boxPlotToolbarFrame = Frame(self.boxPlotTab)
+        self.boxPlotToolbarFrame.grid(column=0,row=1)
+        self.toolbar=NavigationToolbar2Tk(self.plotCanvas,self.boxPlotToolbarFrame)
         #=========Categories frame
-        self.buttonFrame = Frame(self.root)
+        self.boxPlotSelectionFrame = Frame(self.boxPlotTab)
         #===Country selection
-        self.countryLabel = Label(self.buttonFrame,text='Country:')
+        self.countryLabel = Label(self.boxPlotSelectionFrame,text='Country:')
         self.countryLabel.pack()
-        self.countryComboBox = Combobox(self.buttonFrame)
+        self.countryComboBox = Combobox(self.boxPlotSelectionFrame)
         self.countryComboBox['values'] = (self.uniqueCountries)
         self.countryComboBox['state'] = 'readonly'
         self.countryComboBox.pack(padx=10,pady=10)
         #===Unit selection
-        self.unitLabel = Label(self.buttonFrame,text='Unit:')
+        self.unitLabel = Label(self.boxPlotSelectionFrame,text='Unit:')
         self.unitLabel.pack()
-        self.unitComboBox = Combobox(self.buttonFrame)
+        self.unitComboBox = Combobox(self.boxPlotSelectionFrame)
         self.unitComboBox['values'] = (self.uniqueUnit)
         self.unitComboBox['state'] = 'readonly'
         self.unitComboBox.pack(padx=10,pady=10)        
         #===Graph drawing button
-        self.graphButton = Button(self.buttonFrame, text='Create graph',command=self.CreateGraph)
+        self.graphButton = Button(self.boxPlotSelectionFrame, text='Create graph',command=self.CreateGraph)
         self.graphButton.pack()
-
-        self.buttonFrame.grid(column=1,row=0,sticky=N)
-
+        self.boxPlotSelectionFrame.grid(column=1,row=0,sticky=N)
+        
+        #==============================================GENERAL STATS=================================
     
     def LoadData(self):
         filepath = easygui.fileopenbox()
