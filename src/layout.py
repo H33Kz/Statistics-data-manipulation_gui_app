@@ -39,6 +39,7 @@ class appMenu():
         self.fileMenu = Menu(self.root)
         self.menuItems = Menu(self.fileMenu)
         self.menuItems.add_command(label='Load data',command=self.LoadData)
+        self.menuItems.add_command(label='Exit app',command=self.root.quit)
         self.fileMenu.add_cascade(label='File',menu=self.menuItems)
         self.root.config(menu=self.fileMenu)
 
@@ -46,26 +47,29 @@ class appMenu():
         self.tabControl = Notebook(self.root)
         self.boxPlotTab = Frame(self.root)
         self.generalStatsTab = Frame(self.root)
+        self.correlationTab = Frame(self.root)
 
         self.tabControl.add(self.boxPlotTab,text='boxplot')
         self.tabControl.add(self.generalStatsTab,text='general')
+        self.tabControl.add(self.correlationTab,text='correlation')
         self.tabControl.pack()
 
-        #==============================================BOXPLOT====================================
+        #==============================================BOXPLOT TAB====================================
         #=========Plot frame
         self.boxPlotFrame = Frame(self.boxPlotTab)
-        self.figure = plt.figure(figsize=(8,6),dpi=100)
-        self.graph = self.figure.add_subplot(111)
-        self.plotCanvas = FigureCanvasTkAgg(self.figure,self.boxPlotFrame)
-        self.plotCanvas.get_tk_widget().pack()
-        self.plotCanvas.draw()
+        self.boxPlotFigure = plt.figure(figsize=(10,6),dpi=100)
+        self.boxPlotGraph = self.boxPlotFigure.add_subplot(111)
+        self.boxPlotCanvas = FigureCanvasTkAgg(self.boxPlotFigure,self.boxPlotFrame)
+        self.boxPlotCanvas.get_tk_widget().pack()
+        self.boxPlotCanvas.draw()
         self.boxPlotFrame.grid(column=0,row=0)
         #=========Toolbar frame
         self.boxPlotToolbarFrame = Frame(self.boxPlotTab)
         self.boxPlotToolbarFrame.grid(column=0,row=1)
-        self.toolbar=NavigationToolbar2Tk(self.plotCanvas,self.boxPlotToolbarFrame)
-        #=========Categories frame
+        self.toolbar=NavigationToolbar2Tk(self.boxPlotCanvas,self.boxPlotToolbarFrame)
+        #=========Selection frame
         self.boxPlotSelectionFrame = Frame(self.boxPlotTab)
+        self.boxPlotSelectionFrame.grid(column=1,row=0,sticky=N)
         #===Country selection
         self.countryLabel = Label(self.boxPlotSelectionFrame,text='Country:')
         self.countryLabel.pack()
@@ -81,12 +85,36 @@ class appMenu():
         self.unitComboBox['state'] = 'readonly'
         self.unitComboBox.pack(padx=10,pady=10)        
         #===Graph drawing button
-        self.graphButton = Button(self.boxPlotSelectionFrame, text='Create graph',command=self.CreateGraph)
-        self.graphButton.pack()
-        self.boxPlotSelectionFrame.grid(column=1,row=0,sticky=N)
+        self.graphButton = Button(self.boxPlotSelectionFrame, text='Analyze data',command=self.CreateGraphs)
+        self.graphButton.pack(padx=10,pady=10)
+        #===Exit button
+        self.exitButton1 = Button(self.boxPlotSelectionFrame,text='Exit app', command=self.root.quit)
+        self.exitButton1.pack(padx=10,pady=10)
         
-        #==============================================GENERAL STATS=================================
-    
+        
+        #==============================================GENERAL STATS TAB=================================
+        #=========Plot frame
+        self.barGraphFrame = Frame(self.generalStatsTab)
+        self.barGraphFigure = plt.figure(figsize=(10,6),dpi=100)
+        self.barGraph = self.barGraphFigure.add_subplot(111)
+        self.barGraphCanvas = FigureCanvasTkAgg(self.barGraphFigure,self.barGraphFrame)
+        self.barGraphCanvas.get_tk_widget().pack()
+        self.barGraphCanvas.draw()
+        self.barGraphFrame.grid(column=0,row=0)
+        #=========Toolbar frame
+        self.barGraphToolbarFrame = Frame(self.generalStatsTab)
+        self.barGraphToolbarFrame.grid(column=0,row=1)
+        self.toolbar=NavigationToolbar2Tk(self.barGraphCanvas,self.barGraphToolbarFrame)
+        #=========Selection frame
+        self.barGraphSelectionFrame = Frame(self.generalStatsTab)
+        self.barGraphSelectionFrame.grid(column=1,row=0,sticky=N)
+        #==Exit Button
+        self.exitButton2 = Button(self.barGraphSelectionFrame,text='Exit app',command=self.root.quit)
+        self.exitButton2.pack(padx=10,pady=10)
+
+
+        #==============================================CORRELATION TAB=================================
+
     def LoadData(self):
         filepath = easygui.fileopenbox()
 
@@ -115,7 +143,8 @@ class appMenu():
         else:
             print('Datatype not supported')
 
-    def CreateGraph(self):
+    def CreateGraphs(self):
+
         #====Getting chosen options
         selectedCountry = self.countryComboBox.get()
         selectedUnit = self.unitComboBox.get()
@@ -127,19 +156,37 @@ class appMenu():
         #====Transforming date record to be only month
         for row in selectedData:
             row[-2] = str(parser.parse(row[-2]).month)
+
+        #=============================Data Parsing for boxplot
         #====Transforming data for graph drawing
-        plotData = [[] for i in range(12)]
+        boxPlotData = [[] for i in range(12)]
         for row in selectedData:
-            for idx,dataRow in enumerate(plotData):
+            for idx,dataRow in enumerate(boxPlotData):
                 if idx == int(row[-2])-1:
                     dataRow.append(float(row[-3]))
+        #=============================Data parsing for bar graph
+        barGraphData = [[] for i in range(12)]
+        for idx,row in enumerate(boxPlotData):
+            barGraphData[idx] = len(row)
 
-        #====Clearing graph
-        self.figure.clear()
-        self.graph.clear()
-        self.graph = self.figure.add_subplot(111)
-        #====Ploting with a new data
-        self.graph.boxplot(plotData)
-        self.plotCanvas.draw()
+        #=============================Ploting boxplot
+        #====Clearing boxplot graph
+        self.boxPlotFigure.clear()
+        self.boxPlotGraph.clear()
+        self.boxPlotGraph = self.boxPlotFigure.add_subplot(111)
+        #====Ploting boxplot with a new data
+        self.boxPlotGraph.boxplot(boxPlotData)
+        self.boxPlotCanvas.draw()
+
+        #============================Ploting bar graph
+        #====Clearing bar graph
+        self.barGraphFigure.clear()
+        self.barGraph.clear()
+        self.barGraph = self.barGraphFigure.add_subplot(111)
+        #====Ploting bar graph with new data
+        self.barGraph.bar(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],barGraphData)
+        self.barGraphCanvas.draw()
+
+
 
 
