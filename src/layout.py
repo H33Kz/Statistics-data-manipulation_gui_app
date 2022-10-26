@@ -116,8 +116,10 @@ class appMenu():
         selectedData = []
         for row in self.records:
             if row[-1] == selectedCountry and row[-6] == selectedUnit:
-                row[-2] = str(parser.parse(row[-2]).month)
                 selectedData.append(row)
+        #====Transforming date record to be only month
+        for row in selectedData:
+            row[-2] = str(parser.parse(row[-2]).month)
         #====Transforming data for graph drawing
         plotData = [[] for i in range(12)]
         for row in selectedData:
