@@ -1,5 +1,3 @@
-from pydoc import text
-from tkinter.tix import NoteBook
 from tkinter.ttk import Combobox, Notebook
 from tkinter import *
 from dateutil import parser
@@ -8,8 +6,8 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
 import os
-import PIL.Image, PIL.ImageTk
 import csv
+import copy
 import numpy as np
 
 
@@ -20,18 +18,13 @@ class appMenu():
         self.uniqueCountries = ['No data']
         self.uniqueUnit = ['No data']
 
-        #=========Loading of plot placeholder image
-        self.BASE_DIR = os.path.dirname(__file__)
-        filePath = os.path.join(self.BASE_DIR,'..','static','Figure_1.png')
-        self.img = PIL.Image.open(filePath)
-        self.img = PIL.ImageTk.PhotoImage(self.img)
-
         #=========Title and geometry setup
         self.root = root
         self.root.geometry(geometry)
         self.root.title(title)
         
         #=========Window icon setup
+        self.BASE_DIR = os.path.dirname(__file__)
         iconPath = os.path.join(self.BASE_DIR,'..','static','chart.ico')
         self.root.iconbitmap(iconPath)
 
@@ -149,13 +142,21 @@ class appMenu():
         selectedCountry = self.countryComboBox.get()
         selectedUnit = self.unitComboBox.get()
         #====Parsing readings that fit chosen category
+        copiedRecords = self.records.copy()
         selectedData = []
-        for row in self.records:
+        rawData = []
+        for row in copiedRecords:
             if row[-1] == selectedCountry and row[-6] == selectedUnit:
-                selectedData.append(row)
+                selectedData.extend(row)
+        
+        rawData = copy.deepcopy(selectedData)
+
         #====Transforming date record to be only month
         for row in selectedData:
             row[-2] = str(parser.parse(row[-2]).month)
+
+        print(copiedRecords)
+            
 
         #=============================Data Parsing for boxplot
         #====Transforming data for graph drawing
@@ -184,7 +185,8 @@ class appMenu():
         self.barGraph.clear()
         self.barGraph = self.barGraphFigure.add_subplot(111)
         #====Ploting bar graph with new data
-        self.barGraph.bar(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],barGraphData)
+        bars = self.barGraph.barh(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],barGraphData)
+        self.barGraph.bar_label(bars)
         self.barGraphCanvas.draw()
 
 
