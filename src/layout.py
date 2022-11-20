@@ -12,6 +12,7 @@ import copy
 import easygui
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy.stats as stats
 
 
 class appMenu():
@@ -212,6 +213,10 @@ class appMenu():
         self.boxPlotGraph.boxplot(boxPlotData)
         self.boxPlotCanvas.draw()
 
+        # =============================Computing variance analysis - ANOVA, Post Hoc and Tukey
+        # !====ANOVA giving NaN values in a case where some months have 0 data - With data used it cannot compute answer
+        fvalue, pvalue = stats.f_oneway(*boxPlotData)
+        print(f'{fvalue}  {pvalue}')
         # ============================Ploting bar graph
         # ====Clearing bar graph
         self.barGraphFigure.clear()
@@ -260,6 +265,8 @@ class appMenu():
                 treeviewData[idx].append(None)
 
             try:
+                # TODO Test more possibilities - use better examples etc.
+                # !Evaluating IQR not possible - probably not suited variables
                 # treeviewData[idx].append(np.median(
                 #    sorted(convertedRow[math.floor(len(convertedRow)/2):])) - np.median(sorted(convertedRow[:math.floor(len(convertedRow)/2)])))
                 treeviewData[idx].append('iqr')
