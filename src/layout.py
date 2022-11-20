@@ -1,7 +1,5 @@
-from statistics import median
 from tkinter.ttk import Combobox, Notebook, Treeview
 from tkinter import *
-from turtle import width
 from dateutil import parser
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
@@ -25,7 +23,7 @@ class appMenu():
 
         # =========Title and geometry setup
         self.root = root
-        self.root.geometry(geometry)
+        self.root.geometry(f'{self.root.winfo_screenwidth()}x{self.root.winfo_screenheight()+1000}+0+0')
         self.root.title(title)
 
         # =========Window icon setup
@@ -93,7 +91,22 @@ class appMenu():
         self.exitButton1 = Button(
             self.boxPlotSelectionFrame, text='Exit app', command=self.root.quit)
         self.exitButton1.pack(padx=10, pady=10)
-
+        # ====Variance analysis frame
+        self.varianceAnalysysFrame = Frame(self.boxPlotTab)
+        self.varianceAnalysysFrame.grid(column=0, row=2, sticky=NSEW)
+        # TODO=====ANOVA and posthoc style and functionality
+        # ====ANOVA frame
+        self.anovaFrame = Frame(self.varianceAnalysysFrame)
+        self.anovaFrame.grid(column=0,row=0)
+        # ====ANOVA text field
+        self.anovaTextField = Text(self.anovaFrame,width=50,state='disabled')
+        self.anovaTextField.pack(padx=10,pady=10)
+        # ====PostHoc frame
+        self.posthocFrame = Frame(self.varianceAnalysysFrame)
+        self.posthocFrame.grid(column=1,row=0)
+        # ====PostHoc text field
+        self.posthocTextField = Text(self.posthocFrame,width=50,state='disabled')
+        self.posthocTextField.pack(padx=10,pady=10)
         # ==============================================GENERAL STATS TAB=================================
         # =========Plot frame
         self.barGraphFrame = Frame(self.generalStatsTab)
@@ -216,7 +229,10 @@ class appMenu():
         # =============================Computing variance analysis - ANOVA, Post Hoc and Tukey
         # !====ANOVA giving NaN values in a case where some months have 0 data - With data used it cannot compute answer
         fvalue, pvalue = stats.f_oneway(*boxPlotData)
-        print(f'{fvalue}  {pvalue}')
+        self.anovaTextField['state'] = 'normal'
+        self.anovaTextField.insert(END,f'ANOVA:\nF={fvalue}   p={pvalue}\nWARNING: If number of data points in any of the\n months is <0 then ANOVA test will give NaN as\n a answer')
+        self.anovaTextField['state'] = 'disabled'
+        self.anovaTextField.pack()
         # ============================Ploting bar graph
         # ====Clearing bar graph
         self.barGraphFigure.clear()
