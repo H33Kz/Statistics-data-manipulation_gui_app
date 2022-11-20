@@ -5,6 +5,7 @@ from turtle import width
 from dateutil import parser
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
+import math
 import os
 import csv
 import copy
@@ -227,6 +228,7 @@ class appMenu():
 
         for idx, row in enumerate(boxPlotData):
             convertedRow = [float(x) for x in row]
+            convertedRow = sorted(convertedRow)
 
             try:
                 treeviewData[idx].append(min(convertedRow))
@@ -249,11 +251,13 @@ class appMenu():
                 treeviewData[idx].append(None)
 
             try:
-                treeviewData[idx].append('std')
+                treeviewData[idx].append(np.std(convertedRow))
             except ValueError:
                 treeviewData[idx].append(None)
 
             try:
+                # treeviewData[idx].append(np.median(
+                #    sorted(convertedRow[math.floor(len(convertedRow)/2):])) - np.median(sorted(convertedRow[:math.floor(len(convertedRow)/2)])))
                 treeviewData[idx].append('iqr')
             except ValueError:
                 treeviewData[idx].append(None)
