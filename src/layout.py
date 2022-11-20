@@ -222,14 +222,18 @@ class appMenu():
         self.barGraph.bar_label(bars)
         self.barGraphCanvas.draw()
 
+        # ==================Computing general statistic values for chosen criteria
+        # ====Creating treeview data variable wich will contain stats in form of a list of lists
         treeviewData = [[] for i in range(12)]
         for idx, month in enumerate(self.monthHeaders):
             treeviewData[idx].append(month)
 
+        # ====Taking previously parsed boxplot data and converting it to floating point numbers in order to compute their statistic measurements
         for idx, row in enumerate(boxPlotData):
             convertedRow = [float(x) for x in row]
             convertedRow = sorted(convertedRow)
 
+            # ====Series of try-except blocks for every stat - necessery in order to avoid problems, when number of meassurements is insufficient or inexistent
             try:
                 treeviewData[idx].append(min(convertedRow))
             except ValueError:
@@ -262,6 +266,10 @@ class appMenu():
             except ValueError:
                 treeviewData[idx].append(None)
 
+        # ====Deleting previous data from treeview
+        for child in self.generalStatsTreeview.get_children():
+            self.generalStatsTreeview.delete(child)
+        # ====Displaying computed data in respective frame
         for month in treeviewData:
             self.generalStatsTreeview.insert(parent="",
                                              index='end', values=tuple(month))
