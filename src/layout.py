@@ -3,6 +3,7 @@ from tkinter import *
 from dateutil import parser
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
+from statsmodels.stats.multicomp import pairwise_tukeyhsd
 import math
 import os
 import csv
@@ -23,7 +24,8 @@ class appMenu():
 
         # =========Title and geometry setup
         self.root = root
-        self.root.geometry(f'{self.root.winfo_screenwidth()}x{self.root.winfo_screenheight()+1000}+0+0')
+        self.root.geometry(
+            f'{self.root.winfo_screenwidth()}x{self.root.winfo_screenheight()-100}+0+0')
         self.root.title(title)
 
         # =========Window icon setup
@@ -97,16 +99,17 @@ class appMenu():
         # TODO=====ANOVA and posthoc style and functionality
         # ====ANOVA frame
         self.anovaFrame = Frame(self.varianceAnalysysFrame)
-        self.anovaFrame.grid(column=0,row=0)
+        self.anovaFrame.grid(column=0, row=0)
         # ====ANOVA text field
-        self.anovaTextField = Text(self.anovaFrame,width=50,state='disabled')
-        self.anovaTextField.pack(padx=10,pady=10)
+        self.anovaTextField = Text(self.anovaFrame, width=50, state='disabled')
+        self.anovaTextField.pack(padx=10, pady=10)
         # ====PostHoc frame
         self.posthocFrame = Frame(self.varianceAnalysysFrame)
-        self.posthocFrame.grid(column=1,row=0)
+        self.posthocFrame.grid(column=1, row=0)
         # ====PostHoc text field
-        self.posthocTextField = Text(self.posthocFrame,width=50,state='disabled')
-        self.posthocTextField.pack(padx=10,pady=10)
+        self.posthocTextField = Text(
+            self.posthocFrame, width=50, state='disabled')
+        self.posthocTextField.pack(padx=10, pady=10)
         # ==============================================GENERAL STATS TAB=================================
         # =========Plot frame
         self.barGraphFrame = Frame(self.generalStatsTab)
@@ -187,24 +190,44 @@ class appMenu():
             print('Datatype not supported')
 
     def AnalyzeData(self):
+        # ====Using methods to perform different means of data analysys
+        selectedData = self.parseSelectedData()
+        boxPlotData = self.createBoxPlot(selectedData=selectedData)
+        barGraphData = self.createBarGraph(boxPlotData=boxPlotData)
+        self.generateGeneralStats(boxPlotData=boxPlotData)
+        self.varianceAnalysys(boxPlotData=boxPlotData)
 
+    def varianceAnalysys(self, boxPlotData):
+        # =============================Computing variance analysis - ANOVA, Post Hoc TukeyHSD
+        # ====ANOVA
+        # !====ANOVA giving NaN values in a case where some months have 0 data - With data used it cannot compute answer
+        fvalue, pvalue = stats.f_oneway(*boxPlotData)
+        self.anovaTextField['state'] = 'normal'
+        self.anovaTextField.insert(
+            END, f'ANOVA:\nF={fvalue}   p={pvalue}\nWARNING: If number of data points in any of the\n months is <0 then ANOVA test will give NaN as\n an answer')
+        self.anovaTextField['state'] = 'disabled'
+        self.anovaTextField.pack()
+        # ====TukeyHSD
+
+    def parseSelectedData(self):
         # ====Getting chosen options
         selectedCountry = self.countryComboBox.get()
         selectedUnit = self.unitComboBox.get()
         # ====Parsing readings that fit chosen category
         copiedRecords = copy.deepcopy(self.records)
         selectedData = []
-        rawData = []
         for row in copiedRecords:
             if row[-1] == selectedCountry and row[-6] == selectedUnit:
                 selectedData.append(row)
 
-        rawData = copy.deepcopy(selectedData)
-
-        # ====Transforming date record to be only month
+        # ====Transforming date record to be only month and measurements to be float
         for row in selectedData:
             row[-2] = str(parser.parse(row[-2]).month)
+            row[-3] = float(row[-3])
 
+        return selectedData
+
+    def createBoxPlot(self, selectedData):
         # =============================Data Parsing for boxplot
         # ====Transforming data for graph drawing
         boxPlotData = [[] for i in range(12)]
@@ -212,10 +235,6 @@ class appMenu():
             for idx, dataRow in enumerate(boxPlotData):
                 if idx == int(row[-2])-1:
                     dataRow.append(float(row[-3]))
-        # =============================Data parsing for bar graph
-        barGraphData = [[] for i in range(12)]
-        for idx, row in enumerate(boxPlotData):
-            barGraphData[idx] = len(row)
 
         # =============================Ploting boxplot
         # ====Clearing boxplot graph
@@ -226,13 +245,14 @@ class appMenu():
         self.boxPlotGraph.boxplot(boxPlotData)
         self.boxPlotCanvas.draw()
 
-        # =============================Computing variance analysis - ANOVA, Post Hoc and Tukey
-        # !====ANOVA giving NaN values in a case where some months have 0 data - With data used it cannot compute answer
-        fvalue, pvalue = stats.f_oneway(*boxPlotData)
-        self.anovaTextField['state'] = 'normal'
-        self.anovaTextField.insert(END,f'ANOVA:\nF={fvalue}   p={pvalue}\nWARNING: If number of data points in any of the\n months is <0 then ANOVA test will give NaN as\n a answer')
-        self.anovaTextField['state'] = 'disabled'
-        self.anovaTextField.pack()
+        return boxPlotData
+
+    def createBarGraph(self, boxPlotData):
+        # =============================Data parsing for bar graph
+        barGraphData = [[] for i in range(12)]
+        for idx, row in enumerate(boxPlotData):
+            barGraphData[idx] = len(row)
+
         # ============================Ploting bar graph
         # ====Clearing bar graph
         self.barGraphFigure.clear()
@@ -243,6 +263,9 @@ class appMenu():
         self.barGraph.bar_label(bars)
         self.barGraphCanvas.draw()
 
+        return barGraphData
+
+    def generateGeneralStats(self, boxPlotData):
         # ==================Computing general statistic values for chosen criteria
         # ====Creating treeview data variable wich will contain stats in form of a list of lists
         treeviewData = [[] for i in range(12)]
