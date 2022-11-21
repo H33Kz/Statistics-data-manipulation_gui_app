@@ -201,10 +201,11 @@ class appMenu():
         # =============================Computing variance analysis - ANOVA, Post Hoc TukeyHSD
         # ====ANOVA
         # !====ANOVA giving NaN values in a case where some months have 0 data - With data used it cannot compute answer
-        fvalue, pvalue = stats.f_oneway(*boxPlotData)
+        fvalue, pvalue = stats.f_oneway(
+            *[x for x in boxPlotData if len(x) > 0])
         self.anovaTextField['state'] = 'normal'
         self.anovaTextField.insert(
-            END, f'ANOVA:\nF={fvalue}   p={pvalue}\nWARNING: If number of data points in any of the\n months is <0 then ANOVA test will give NaN as\n an answer')
+            END, f'ANOVA:\nF={fvalue}   p={pvalue}\nWARNING: If number of data points in any of the\n months is <0 then ANOVA test will evaluate\n only non empty ones')
         self.anovaTextField['state'] = 'disabled'
         self.anovaTextField.pack()
         # ====TukeyHSD
