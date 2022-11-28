@@ -85,10 +85,10 @@ class appMenu():
         self.unitComboBox['values'] = (self.uniqueUnit)
         self.unitComboBox['state'] = 'readonly'
         self.unitComboBox.pack(padx=10, pady=10)
-        # ===Graph drawing button
-        self.graphButton = Button(
+        # ===Initialize analysys button
+        self.analyseButton = Button(
             self.boxPlotSelectionFrame, text='Analyze data', command=self.AnalyzeData)
-        self.graphButton.pack(padx=10, pady=10)
+        self.analyseButton.pack(padx=10, pady=10)
         # ===Exit button
         self.exitButton1 = Button(
             self.boxPlotSelectionFrame, text='Exit app', command=self.root.quit)
@@ -123,7 +123,7 @@ class appMenu():
         # =========Toolbar frame
         self.barGraphToolbarFrame = Frame(self.generalStatsTab)
         self.barGraphToolbarFrame.grid(column=0, row=1)
-        self.toolbar = NavigationToolbar2Tk(
+        self.barGraphToolbar = NavigationToolbar2Tk(
             self.barGraphCanvas, self.barGraphToolbarFrame)
         # =========Selection frame
         self.barGraphSelectionFrame = Frame(self.generalStatsTab)
@@ -158,6 +158,55 @@ class appMenu():
         self.generalStatsTreeview.pack(pady=10, padx=10)
 
         # ==============================================CORRELATION TAB=================================
+        # =========Plot frame
+        self.correlGraphFrame = Frame(self.correlationTab)
+        self.correlGraphFigure = plt.figure(figsize=(10, 6), dpi=100)
+        self.correlGraph = self.correlGraphFigure.add_subplot(111)
+        self.correlGraphCanvas = FigureCanvasTkAgg(
+            self.correlGraphFigure, self.correlGraphFrame)
+        self.correlGraphCanvas.get_tk_widget().pack()
+        self.correlGraphCanvas.draw()
+        self.correlGraphFrame.grid(column=0, row=0)
+        # =========Toolbar frame
+        self.correlGraphToolbarFrame = Frame(self.correlationTab)
+        self.correlGraphToolbarFrame.grid(column=0, row=1)
+        self.correlGraphToolbar = NavigationToolbar2Tk(
+            self.correlGraphCanvas, self.correlGraphToolbarFrame)
+        # =========Selection frame
+        self.correlGraphSelectionFrame = Frame(self.correlationTab)
+        self.correlGraphSelectionFrame.grid(column=1, row=0, sticky=N)
+        # ==Exit Button
+        self.exitButton3 = Button(
+            self.correlGraphSelectionFrame, text='Exit app', command=self.root.quit)
+        self.exitButton3.pack(padx=10, pady=10)
+        # ===Country selection
+        self.correlCountryLabel = Label(
+            self.correlGraphSelectionFrame, text='Country:')
+        self.correlCountryLabel.pack()
+        self.correlCountryComboBox = Combobox(self.correlGraphSelectionFrame)
+        self.correlCountryComboBox['values'] = (self.uniqueCountries)
+        self.correlCountryComboBox['state'] = 'readonly'
+        self.correlCountryComboBox.pack(padx=10, pady=10)
+        # ===First unit selection
+        self.firstUnitLabel = Label(
+            self.correlGraphSelectionFrame, text='First unit:')
+        self.firstUnitLabel.pack()
+        self.firstUnitComboBox = Combobox(self.correlGraphSelectionFrame)
+        self.firstUnitComboBox['values'] = (self.uniqueUnit)
+        self.firstUnitComboBox['state'] = 'readonly'
+        self.firstUnitComboBox.pack(padx=10, pady=10)
+        # ===Unit selection
+        self.secondUnitLabel = Label(
+            self.correlGraphSelectionFrame, text='Second Unit:')
+        self.secondUnitLabel.pack()
+        self.secondUnitComboBox = Combobox(self.correlGraphSelectionFrame)
+        self.secondUnitComboBox['values'] = (self.uniqueUnit)
+        self.secondUnitComboBox['state'] = 'readonly'
+        self.secondUnitComboBox.pack(padx=10, pady=10)
+        # ===Initialize analysis button
+        self.checkCorrelButton = Button(
+            self.correlGraphSelectionFrame, text='Check for correlation', command=self.CorrelationAnalysis)
+        self.checkCorrelButton.pack(padx=10, pady=10)
 
     def LoadData(self):
         filepath = easygui.fileopenbox()
@@ -191,13 +240,14 @@ class appMenu():
 
     def AnalyzeData(self):
         # ====Using methods to perform different means of data analysys
-        selectedData = self.parseSelectedData()
-        boxPlotData = self.createBoxPlot(selectedData=selectedData)
-        barGraphData = self.createBarGraph(boxPlotData=boxPlotData)
-        self.generateGeneralStats(boxPlotData=boxPlotData)
-        self.varianceAnalysys(boxPlotData=boxPlotData)
+        selectedData = self.ParseSelectedData(
+            selectedCountry=self.countryComboBox.get(), selectedUnit=self.unitComboBox.get())
+        boxPlotData = self.CreateBoxPlot(selectedData=selectedData)
+        barGraphData = self.CreateBarGraph(boxPlotData=boxPlotData)
+        self.GenerateGeneralStats(boxPlotData=boxPlotData)
+        self.VarianceAnalysis(boxPlotData=boxPlotData)
 
-    def varianceAnalysys(self, boxPlotData):
+    def VarianceAnalysis(self, boxPlotData):
         # =============================Computing variance analysis - ANOVA, Post Hoc TukeyHSD
         # ====ANOVA
         # !====ANOVA giving NaN values in a case where some months have 0 data - With data used it cannot compute answer
@@ -209,11 +259,20 @@ class appMenu():
         self.anovaTextField['state'] = 'disabled'
         self.anovaTextField.pack()
         # ====TukeyHSD
+        # TODO
 
-    def parseSelectedData(self):
-        # ====Getting chosen options
-        selectedCountry = self.countryComboBox.get()
-        selectedUnit = self.unitComboBox.get()
+    def CorrelationAnalysis(self):
+        # ====Parse selected data for correlation
+        firstUnitData = self.ParseSelectedData(
+            selectedCountry=self.correlCountryComboBox.get(), selectedUnit=self.firstUnitComboBox.get())
+        secondUnitData = self.ParseSelectedData(
+            selectedCountry=self.correlCountryComboBox.get(), selectedUnit=self.secondUnitComboBox.get())
+
+        for firstUnitRow in firstUnitData:
+            for secondUnitRow in secondUnitData:
+                pass
+
+    def ParseSelectedData(self, selectedCountry, selectedUnit):
         # ====Parsing readings that fit chosen category
         copiedRecords = copy.deepcopy(self.records)
         selectedData = []
@@ -228,7 +287,7 @@ class appMenu():
 
         return selectedData
 
-    def createBoxPlot(self, selectedData):
+    def CreateBoxPlot(self, selectedData):
         # =============================Data Parsing for boxplot
         # ====Transforming data for graph drawing
         boxPlotData = [[] for i in range(12)]
@@ -248,7 +307,7 @@ class appMenu():
 
         return boxPlotData
 
-    def createBarGraph(self, boxPlotData):
+    def CreateBarGraph(self, boxPlotData):
         # =============================Data parsing for bar graph
         barGraphData = [[] for i in range(12)]
         for idx, row in enumerate(boxPlotData):
@@ -266,7 +325,7 @@ class appMenu():
 
         return barGraphData
 
-    def generateGeneralStats(self, boxPlotData):
+    def GenerateGeneralStats(self, boxPlotData):
         # ==================Computing general statistic values for chosen criteria
         # ====Creating treeview data variable wich will contain stats in form of a list of lists
         treeviewData = [[] for i in range(12)]
