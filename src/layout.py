@@ -4,11 +4,11 @@ from dateutil import parser
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
-import math
 import os
 import csv
 import copy
 import easygui
+import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as stats
@@ -96,19 +96,19 @@ class appMenu():
         # ====Variance analysis frame
         self.varianceAnalysysFrame = Frame(self.boxPlotTab)
         self.varianceAnalysysFrame.grid(column=0, row=2, sticky=NSEW)
-        # TODO=====ANOVA and posthoc style and functionality
         # ====ANOVA frame
         self.anovaFrame = Frame(self.varianceAnalysysFrame)
         self.anovaFrame.grid(column=0, row=0)
         # ====ANOVA text field
-        self.anovaTextField = Text(self.anovaFrame, width=50, state='disabled')
+        self.anovaTextField = Text(
+            self.anovaFrame, width=50, state='disabled', font=("Helvetica", 10))
         self.anovaTextField.pack(padx=10, pady=10)
         # ====PostHoc frame
         self.posthocFrame = Frame(self.varianceAnalysysFrame)
         self.posthocFrame.grid(column=1, row=0)
         # ====PostHoc text field
         self.posthocTextField = Text(
-            self.posthocFrame, width=50, state='disabled')
+            self.posthocFrame, width=50, state='disabled', font=("Helvetica", 10))
         self.posthocTextField.pack(padx=10, pady=10)
         # ==============================================GENERAL STATS TAB=================================
         # =========Plot frame
@@ -250,15 +250,30 @@ class appMenu():
     def VarianceAnalysis(self, boxPlotData):
         # =============================Computing variance analysis - ANOVA, Post Hoc TukeyHSD
         # ====ANOVA
-        # !====ANOVA giving NaN values in a case where some months have 0 data - With data used it cannot compute answer
-        fvalue, pvalue = stats.f_oneway(
-            *[x for x in boxPlotData if len(x) > 0])
+        df = pd.DataFrame(boxPlotData)
+        df = df.transpose()
+        df.columns = self.monthHeaders
+
+        fvalue, pvalue = stats.f_oneway(df['Jan'], df['Feb'], df['Mar'], df['Apr'], df['May'],
+                                        df['Jun'], df['Jul'], df['Aug'], df['Sep'], df['Oct'], df['Nov'], df['Dec'])
         self.anovaTextField['state'] = 'normal'
         self.anovaTextField.insert(
             END, f'ANOVA:\nF={fvalue}   p={pvalue}\nWARNING: If number of data points in any of the\n months is <0 then ANOVA test will evaluate\n only non empty ones')
         self.anovaTextField['state'] = 'disabled'
         self.anovaTextField.pack()
         # ====TukeyHSD
+        df_melt = pd.melt(df.reset_index(), id_vars=[
+                          'index'], value_vars=self.monthHeaders)
+
+        p_tukey = pairwise_tukeyhsd(df_melt['value'], df_melt['variable'])
+        result = str(p_tukey._results_table)
+        print(result)
+        print(result.count('\n'))
+        self.posthocTextField['state'] = 'normal'
+        self.posthocTextField.insert(END, result)
+        self.posthocTextField['state'] = 'disabled'
+        self.posthocTextField.pack()
+
         # TODO
 
     def CorrelationAnalysis(self):
