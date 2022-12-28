@@ -294,6 +294,7 @@ class appMenu():
         p_tukey = pairwise_tukeyhsd(df_melt['value'], df_melt['variable'])
         result = str(p_tukey._results_table)
 
+        # Another tukey analysis - not used
         # result = stats.tukey_hsd(df['Jan'], df['Feb'], df['Mar'], df['Apr'], df['May'],
         #                          df['Jun'], df['Jul'], df['Aug'], df['Sep'], df['Oct'], df['Nov'], df['Dec'])
 
@@ -302,8 +303,6 @@ class appMenu():
         self.posthocTextField['state'] = 'disabled'
         self.posthocTextField.pack()
 
-        # TODO
-
     def CorrelationAnalysis(self):
         # ====Parse selected data for correlation
         firstUnitData = self.ParseSelectedData(
@@ -311,9 +310,12 @@ class appMenu():
         secondUnitData = self.ParseSelectedData(
             selectedCountry=self.correlCountryComboBox.get(), selectedUnit=self.secondUnitComboBox.get())
 
-        for firstUnitRow in firstUnitData:
-            for secondUnitRow in secondUnitData:
-                pass
+        correlationData = pd.DataFrame()
+        correlationData['first pollutant'] = firstUnitData.loc[(firstUnitData['Last Updated'] ==
+                                                               secondUnitData['Last Updated']) & (firstUnitData['Source Name'] == secondUnitData['Source Name']), 'Value'].values
+        correlationData['second pollutant'] = secondUnitData.loc[(secondUnitData['Last Updated'] ==
+                                                                 firstUnitData['Last Updated']) & (secondUnitData['Source Name'] == firstUnitData['Source Name']), 'Value'].values
+        print(correlationData)
 
     def ParseSelectedData(self, selectedCountry, selectedUnit):
         # * Old code - without usage of pandas
