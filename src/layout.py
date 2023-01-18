@@ -1,19 +1,20 @@
-from tkinter.ttk import Combobox, Notebook, Treeview
+from tkinter.ttk import Combobox, Notebook
 from tkinter import *
 from dateutil import parser
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
+from easygui import fileopenbox
+from scipy.stats import f_oneway
 import os
-import easygui
 import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
-import scipy.stats as stats
+
 
 # * Old libraries - functionality duplicated by pandas
 # import csv
 # import copy
+# import numpy as np
 
 
 class appMenu():
@@ -219,9 +220,16 @@ class appMenu():
         self.checkCorrelButton = Button(
             self.correlGraphSelectionFrame, text='Check for correlation', command=self.CorrelationAnalysis)
         self.checkCorrelButton.pack(padx=10, pady=10)
+        # ===Message textfield
+        self.correlMessageTextFieldFrame = Frame(self.correlationTab)
+        self.correlMessageTextFieldFrame.grid(column=0, row=2, sticky=NSEW)
+        # ======Textfield
+        self.correlMessageTextField = Text(
+            self.correlMessageTextFieldFrame, width=80, state='disabled', font=("Helvetica", 10))
+        self.correlMessageTextField.pack(padx=10, pady=10)
 
     def LoadData(self):
-        filepath = easygui.fileopenbox()
+        filepath = fileopenbox()
 
         if filepath.endswith('.csv'):
             # * Old code - without usage of pandas
@@ -278,12 +286,13 @@ class appMenu():
         # df.columns = self.monthHeaders
 
         df = boxPlotData
-        fvalue, pvalue = stats.f_oneway(df['Jan'], df['Feb'], df['Mar'], df['Apr'], df['May'],
-                                        df['Jun'], df['Jul'], df['Aug'], df['Sep'], df['Oct'], df['Nov'], df['Dec'])
+        fvalue, pvalue = f_oneway(df['Jan'], df['Feb'], df['Mar'], df['Apr'], df['May'],
+                                  df['Jun'], df['Jul'], df['Aug'], df['Sep'], df['Oct'], df['Nov'], df['Dec'])
 
         self.anovaTextField['state'] = 'normal'
+        self.anovaTextField.delete(1.0, END)
         self.anovaTextField.insert(
-            END, f'ANOVA:\nF={fvalue}   p={pvalue}\nWARNING: If number of data points in any of the\n months is <0 then ANOVA test will evaluate\n only non empty ones')
+            END, f'ANOVA:\nF={fvalue}   p={pvalue}\nWARNING: If number of data points in any of the\n months is <0 then ANOVA test will not evaluate')
         self.anovaTextField['state'] = 'disabled'
         self.anovaTextField.pack()
 
@@ -299,23 +308,53 @@ class appMenu():
         #                          df['Jun'], df['Jul'], df['Aug'], df['Sep'], df['Oct'], df['Nov'], df['Dec'])
 
         self.posthocTextField['state'] = 'normal'
+        self.posthocTextField.delete(1.0, END)
         self.posthocTextField.insert(END, result)
         self.posthocTextField['state'] = 'disabled'
         self.posthocTextField.pack()
 
     def CorrelationAnalysis(self):
+        # ===Clearing message box
+        self.correlMessageTextField['state'] = 'normal'
+        self.correlMessageTextField.delete(1.0, END)
+        self.correlMessageTextField['state'] = 'disabled'
+
         # ====Parse selected data for correlation
         firstUnitData = self.ParseSelectedData(
             selectedCountry=self.correlCountryComboBox.get(), selectedUnit=self.firstUnitComboBox.get())
         secondUnitData = self.ParseSelectedData(
             selectedCountry=self.correlCountryComboBox.get(), selectedUnit=self.secondUnitComboBox.get())
 
-        correlationData = pd.DataFrame()
-        correlationData['first pollutant'] = firstUnitData.loc[(firstUnitData['Last Updated'] ==
-                                                               secondUnitData['Last Updated']) & (firstUnitData['Source Name'] == secondUnitData['Source Name']), 'Value'].values
-        correlationData['second pollutant'] = secondUnitData.loc[(secondUnitData['Last Updated'] ==
-                                                                 firstUnitData['Last Updated']) & (secondUnitData['Source Name'] == firstUnitData['Source Name']), 'Value'].values
-        print(correlationData)
+        secondUnitData.rename(
+            columns={'Unit': 'Unit2', 'Pollutant': 'Pollutant2', 'Value': 'Value2'}, inplace=True)
+        # correlationData = pd.DataFrame()
+        # correlationData['first pollutant'] = firstUnitData.loc[(firstUnitData['Last Updated'] ==
+        #                                                        secondUnitData['Last Updated']) & (firstUnitData['Source Name'] == secondUnitData['Source Name']), 'Value'].values
+        # correlationData['second pollutant'] = secondUnitData.loc[(secondUnitData['Last Updated'] ==
+        #                                                          firstUnitData['Last Updated']) & (secondUnitData['Source Name'] == firstUnitData['Source Name']), 'Value'].values
+        # print(correlationData)
+
+        df = pd.merge(firstUnitData, secondUnitData,
+                      on=['Last Updated', 'City'])
+        correlationData = df[['Value', 'Value2']].copy()
+
+        self.correlMessageTextField['state'] = 'normal'
+        if correlationData.empty:
+            self.correlMessageTextField.insert(
+                END, 'Unable to draw correlation graph - No correlating data')
+        else:
+            self.CreateCorrelGraph(correlData=correlationData, firstValuesLabel=str(
+                df['Pollutant'].iat[0]), secondValuesLabel=str(df['Pollutant2'].iat[0]))
+            pearsonCoeff = correlationData.corr()['Value2'].iat[0]
+            spearmanCoeff = correlationData.corr(
+                method='spearman')['Value2'].iat[0]
+            self.correlMessageTextField.insert(
+                END, f'Pearson\'s correlation coeafficient\n {pearsonCoeff}\n')
+            self.correlMessageTextField.insert(
+                END, f'Spearman\'s rank correlation coeafficient\n {spearmanCoeff}\n')
+
+        self.correlMessageTextField['state'] = 'disabled'
+        self.correlMessageTextField.pack()
 
     def ParseSelectedData(self, selectedCountry, selectedUnit):
         # * Old code - without usage of pandas
@@ -369,6 +408,8 @@ class appMenu():
         self.boxPlotGraph = self.boxPlotFigure.add_subplot(111)
         # ====Ploting boxplot with a new data
         self.boxPlotGraph.boxplot(boxPlotData, labels=self.monthHeaders)
+        unit = selectedData['Unit'].iat[0]
+        self.boxPlotGraph.set_ylabel(f'{self.unitComboBox.get()}[{unit}]')
         self.boxPlotCanvas.draw()
 
         return boxPlotData
@@ -392,9 +433,22 @@ class appMenu():
         bars = self.barGraph.barh(
             self.monthHeaders, barGraphData.values.tolist()[0])
         self.barGraph.bar_label(bars)
+        self.barGraph.set_xlabel('Measurements in each month')
         self.barGraphCanvas.draw()
 
         return barGraphData
+
+    def CreateCorrelGraph(self, correlData, firstValuesLabel, secondValuesLabel):
+        # =============================Ploting correlation graph
+        # ====Clearing correlation graph
+        self.correlGraphFigure.clear()
+        self.correlGraph.clear()
+        self.correlGraph = self.correlGraphFigure.add_subplot(111)
+        # ====Ploting correlation with a new data
+        self.correlGraph.plot(correlData['Value'], correlData['Value2'], 'bo')
+        self.correlGraph.set_xlabel(firstValuesLabel)
+        self.correlGraph.set_ylabel(secondValuesLabel)
+        self.correlGraphCanvas.draw()
 
     def GenerateGeneralStats(self, boxPlotData):
         # * Old code - without using pandas
@@ -454,6 +508,7 @@ class appMenu():
         # self.generalStatsTreeview.pack()
 
         self.generalStatsTextField['state'] = 'normal'
+        self.generalStatsTextField.delete(1.0, END)
         self.generalStatsTextField.insert(
             END, boxPlotData.describe().transpose())
         self.generalStatsTextField['state'] = 'disabled'
