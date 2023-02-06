@@ -29,7 +29,7 @@ class appMenu():
         # =========Title and geometry setup
         self.root = root
         self.root.geometry(
-            f'{self.root.winfo_screenwidth()}x{self.root.winfo_screenheight()-100}+0+0')
+            f'{self.root.winfo_screenwidth()-600}x{self.root.winfo_screenheight()-150}+0+0')
         self.root.title(title)
 
         # =========Window icon setup
@@ -232,29 +232,6 @@ class appMenu():
         filepath = fileopenbox()
 
         if filepath.endswith('.csv'):
-            # * Old code - without usage of pandas
-            # ====Opening csv file and saving its data to a list of lists
-            # rows = []
-            # with open(filepath, 'r', encoding='utf-8') as file:
-            #     csvreader = csv.reader(file)
-            #     self.header = next(csvreader)
-            #     for row in csvreader:
-            #         rows.append(row)
-            # self.records = rows
-            # # ====Parsing unique country names to a list
-            # self.uniqueCountries = []
-            # for row in self.records:
-            #     self.uniqueCountries.append(row[-1])
-            # self.uniqueCountries = np.ndarray.tolist(
-            #     np.unique(np.array(self.uniqueCountries)))
-            # self.countryComboBox['values'] = (self.uniqueCountries)
-            # # ====Parsing unique units to a list
-            # self.uniqueUnit = []
-            # for row in self.records:
-            #     self.uniqueUnit.append(row[-6])
-            # self.uniqueUnit = np.ndarray.tolist(
-            #     np.unique(np.array(self.uniqueUnit)))
-            # self.unitComboBox['values'] = (self.uniqueUnit)
             df = pd.read_csv(filepath, sep=',')
             uniqueCountries = pd.unique(df['Country Label'])
             self.countryComboBox['values'] = uniqueCountries.tolist()
@@ -292,7 +269,7 @@ class appMenu():
         self.anovaTextField['state'] = 'normal'
         self.anovaTextField.delete(1.0, END)
         self.anovaTextField.insert(
-            END, f'ANOVA:\nF={fvalue}   p={pvalue}\nWARNING: If number of data points in any of the\n months is <0 then ANOVA test will not evaluate')
+            END, f'ANOVA:\nF={fvalue}   p={pvalue}\nWARNING: If number of data points in any of the\n months is 0 then ANOVA test will not evaluate')
         self.anovaTextField['state'] = 'disabled'
         self.anovaTextField.pack()
 
@@ -401,6 +378,7 @@ class appMenu():
                                                                == str(i + 1), 'Value'].values)
         boxPlotData.columns = self.monthHeaders
 
+        print(boxPlotData)
         # =============================Ploting boxplot
         # ====Clearing boxplot graph
         self.boxPlotFigure.clear()
@@ -445,7 +423,7 @@ class appMenu():
         self.correlGraph.clear()
         self.correlGraph = self.correlGraphFigure.add_subplot(111)
         # ====Ploting correlation with a new data
-        self.correlGraph.plot(correlData['Value'], correlData['Value2'], 'bo')
+        self.correlGraph.scatter(correlData['Value'], correlData['Value2'])
         self.correlGraph.set_xlabel(firstValuesLabel)
         self.correlGraph.set_ylabel(secondValuesLabel)
         self.correlGraphCanvas.draw()
